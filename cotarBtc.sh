@@ -20,6 +20,17 @@
 #       - Versão inicial apenas com busca na API
 #   v1.1 19/08/2018
 #       - Versão 1.1 com menu, -h, -v e parâmetros de repetição
+#   v1.2 07/09/2018
+#       - Alterado expressão regular e nome da função principal
+#   v2.0 07/09/2018
+#       - Refeito todo design do código
+#       - Removido o teste de parâmetro
+#       - Função de dump foi movida para o final do arquivo para não afetar na performance de outros comandos como -h e -v
+#       - Adicionado variáveis padrão para sempre ser executado com algum parâmetro (linhas 69 e 70)
+#       - Otimizada a função de mensagens de 8 linhas para 2
+#       - Alterado o nome das funções para seguir o padrão Português
+#       - Função principal foi alterado de for para while, melhorando a leitura do mesmo
+#       - Funçã de dump da Internet foi adicionada diretamente no comando read, ao invés de uma variável antes
 # ------------------------------------------------------------------------ #
 # Testado em:
 #   bash 4.4.19
@@ -40,29 +51,16 @@ OPÇÕES:
     -v, --version - Mostra a versão do script
     -h, --help - Mostra opções de ajuda
 "
-VERSAO="v1.1"
+VERSAO="v2.0"
 # ------------------------------------------------------------------------ #
 
 # -------------------------------TESTES----------------------------------------- #
 # Lynx instalado?
 [ ! -x "$(which lynx)" ] && printf "${AMARELO}Precisamos instalar o ${VERDE}Lynx${AMARELO}, por favor, digite sua senha:${SEM_COR}\n" && sudo apt install lynx 1> /dev/null 2>&1 -y
-
-# Sem parâmetros obrigatórios?
-[ -z $1 ] && printf "${VERMELHO}[ERRO] - Informe os parâmetros obrigatórios. Consulte a opção -h.\n" && exit 1
 # ------------------------------------------------------------------------ #
 
 # -------------------------------VARIÁVEIS AVANÇADAS----------------------------------------- #
-API_MERCADO_BITCOIN="https://www.mercadobitcoin.net/api/BTC/ticker/" 
-JSON_MERCADO_BITCOIN=$(lynx -source $API_MERCADO_BITCOIN | # Código JSON da API
-                            sed 's/[{|}]//g ; 
-                                s/"ticker": // ; 
-                                s/"//g ; 
-                                s/,//g' | # Remove os caracteres {},ticker:" e deixa somente as palavras e números
-                            cut -d ' ' -f 2,4,6,8,10,12,14) # Extrai somente os números
-
-# Cria um ARRAY com os números coletados da API
-read -r -a ARRAY_JSON_MERCADO_BITCOIN <<< $JSON_MERCADO_BITCOIN
-
+API_MERCADO_BITCOIN="https://www.mercadobitcoin.net/api/BTC/ticker/"
 DESCRICAO_DAS_INFORMACOES=(
     "Maior preço unitário de negociação das últimas 24 horas: "
     "Menor preço unitário de negociação das últimas 24 horas: "
@@ -72,48 +70,48 @@ DESCRICAO_DAS_INFORMACOES=(
     "Menor preço de oferta de venda das últimas 24 horas: "
     "Data: "
 )
-PARAMETRO_1=$1
-PARAMETRO_2=$2
+TEMPO_DE_ATUALIZACAO=${1:-1}
+VEZES_EXECUTADAS=${2:-10}
 # ------------------------------------------------------------------------ #
 
 # -------------------------------FUNÇÕES----------------------------------------- #
 FormataData () {
-    date -d "@${1}" +%d/%m/%Y # Formata de Unix para dd/mm/yyyy 
+    date -d "@${1}" +%d/%m/%Y # Formata de Unix para dd/mm/yyyy
 }
 
-Mensagens () {
-    printf "${AMARELO}${DESCRICAO_DAS_INFORMACOES[$numero]}${NO_COLOR}"
-    if [ "$1" = "data" ]; then
-        printf "${VERDE}%s" "$(FormataData ${ARRAY_JSON_MERCADO_BITCOIN[$numero]})" "${NO_COLOR}"
-        echo -e "\n-----------------------------------------------------------------------------"
-    else        
-        printf "${VERDE}${ARRAY_JSON_MERCADO_BITCOIN[$numero]}${NO_COLOR}"
-    fi
-    printf "\n"
+MostraDados () {
+    # O parâmetro 6 significa que é a DATA e precisa ser formatada para dd/mm/yyyy
+    [ $1 -eq 6 ] && echo -e "${VERDE}${DESCRICAO_DAS_INFORMACOES[$1]}${AMARELO}$(FormataData ${ARRAY_JSON_MERCADO_BITCOIN[$1]})\n--" && return
+
+    echo -e "${VERDE}${DESCRICAO_DAS_INFORMACOES[$1]}${AMARELO}${ARRAY_JSON_MERCADO_BITCOIN[$1]}"
 }
 
-Main () {
-for i in $(seq 1 $PARAMETRO_2); do 
-    for numero in $(seq 0 6); do # 7 itens que são mostrados
-        if [ $numero -eq 6 ]; then # É a data?
-            Mensagens data # Passa o parâmetro "data" para formatar para pt-BR
-        else
-            Mensagens
-        fi
-    done
-    sleep $PARAMETRO_1 # Tempo de espera
+ListaDados () {
+local contador=0
+local contador_2=0
+
+while [[ $contador -lt $VEZES_EXECUTADAS ]]; do
+  while [[ $contador_2 -lt ${#ARRAY_JSON_MERCADO_BITCOIN[@]} ]]; do # Enquanto for menor que length
+    MostraDados $contador_2
+    contador_2=$(($contador_2+1))
+  done
+  sleep $TEMPO_DE_ATUALIZACAO
+  contador=$(($contador+1))
+  contador_2=0
 done
 }
 # ------------------------------------------------------------------------ #
 
 # -------------------------------EXECUÇÃO----------------------------------------- #
-while test -n "$1"; do
-    case $1 in
-         -v|--version) printf "Versão $VERSAO\n" && exit 0 ;;
-         -h|--help)    printf "$MENSAGEM_USO\n"  && exit 0 ;;
-    esac
-    shift
-done
+if test -n "$1"; then
+  case "$1" in
+    -v|--version) printf "Versão $VERSAO\n" && exit 0 ;;
+    -h|--help)    printf "$MENSAGEM_USO\n"  && exit 0 ;;
+  esac
+fi
 
-Main
+# Executa no final para não influenciar na performance
+read -r -a ARRAY_JSON_MERCADO_BITCOIN <<< "$(lynx -source $API_MERCADO_BITCOIN | sed 's/[^0-9 .]//g')" # Cria Array com os valores
+
+ListaDados
 # ------------------------------------------------------------------------ #
