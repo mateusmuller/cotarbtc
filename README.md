@@ -6,7 +6,7 @@ Uso:
 
 * *$ ./cotarBtc.sh 10 10*
   
-Isso fará com que ele execute 10 vezes de 10 em 10 segundos. É **obrigatório** informar estes parâmetros.
+Isso fará com que ele execute 10 vezes de 10 em 10 segundos.
 
 ## Instalação?
 * $ git clone https://github.com/mateusmuller/cotarbtc
