@@ -62,13 +62,13 @@ VERSAO="v2.0"
 # -------------------------------VARIÁVEIS AVANÇADAS----------------------------------------- #
 API_MERCADO_BITCOIN="https://www.mercadobitcoin.net/api/BTC/ticker/"
 DESCRICAO_DAS_INFORMACOES=(
-    "Maior preço unitário de negociação das últimas 24 horas: "
-    "Menor preço unitário de negociação das últimas 24 horas: "
-    "Quantidade negociada nas últimas 24 horas: "
-    "Preço unitário da última negociação: "
-    "Maior preço de oferta de compra das últimas 24 horas: "
-    "Menor preço de oferta de venda das últimas 24 horas: "
-    "Data: "
+  "Maior preço unitário de negociação das últimas 24 horas: "
+  "Menor preço unitário de negociação das últimas 24 horas: "
+  "Quantidade negociada nas últimas 24 horas: "
+  "Preço unitário da última negociação: "
+  "Maior preço de oferta de compra das últimas 24 horas: "
+  "Menor preço de oferta de venda das últimas 24 horas: "
+  "Data: "
 )
 TEMPO_DE_ATUALIZACAO=${1:-1}
 VEZES_EXECUTADAS=${2:-10}
@@ -76,14 +76,13 @@ VEZES_EXECUTADAS=${2:-10}
 
 # -------------------------------FUNÇÕES----------------------------------------- #
 FormataData () {
-    date -d "@${1}" +%d/%m/%Y # Formata de Unix para dd/mm/yyyy
+  date -d "@${1}" +%d/%m/%Y # Formata de Unix para dd/mm/yyyy
 }
 
 MostraDados () {
-    # O parâmetro 6 significa que é a DATA e precisa ser formatada para dd/mm/yyyy
-    [ $1 -eq 6 ] && echo -e "${VERDE}${DESCRICAO_DAS_INFORMACOES[$1]}${AMARELO}$(FormataData ${ARRAY_JSON_MERCADO_BITCOIN[$1]})\n--" && return
-
-    echo -e "${VERDE}${DESCRICAO_DAS_INFORMACOES[$1]}${AMARELO}${ARRAY_JSON_MERCADO_BITCOIN[$1]}"
+  # O parâmetro 6 significa que é a DATA e precisa ser formatada para dd/mm/yyyy
+  [ $1 -eq 6 ] && echo -e "${VERDE}${DESCRICAO_DAS_INFORMACOES[$1]}${AMARELO}$(FormataData ${ARRAY_JSON_MERCADO_BITCOIN[$1]})\n--" && return
+  echo -e "${VERDE}${DESCRICAO_DAS_INFORMACOES[$1]}${AMARELO}${ARRAY_JSON_MERCADO_BITCOIN[$1]}"
 }
 
 ListaDados () {
