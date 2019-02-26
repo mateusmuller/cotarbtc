@@ -1,18 +1,18 @@
 # cotarBtc
-Desenvolvi um script para aplicar conhecimentos e boas práticas que aprendi no livro do Aurélio, bem como com alguns *insights* que tive vendo pessoas como o SlackJeff e SHAMAN. Há grandes chances deste script ser usado no meu TCC também! :)
+This script will fetch the Bitcoin information from Mercado Bitcoin API.
 
-## Como usar?
-Uso:
+## How to use it?
+Use:
 
 * *$ ./cotarBtc.sh 10 10*
   
-Isso fará com que ele execute 10 vezes de 10 em 10 segundos.
+It will execute 10 times each 10 seconds.
 
-## Instalação?
+## Installation?
 * $ git clone https://github.com/mateusmuller/cotarbtc
 * $ cd cotarbtc
 * $ ./cotarbtc.sh 1 5
 
-## Licença?
-Está sobre a MIT License - Veja em [LICENSE.md](LICENSE.md).
+## License?
+Under MIT license - See on [LICENSE.md](LICENSE.md).
 
