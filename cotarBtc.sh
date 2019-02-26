@@ -1,116 +1,110 @@
 #!/usr/bin/env bash
 #
-# cotarBtc.sh - Busca informações sobre o valor do BTC via API do Mercado Bitcoin
+# cotarBtc.sh - Get information about the Bitcoin value through "Mercado Bitcoin" API
 #
-# Site:       https://4fasters.com.br
-# Autor:      Mateus Gabriel Müller
-# Manutenção: Mateus Gabriel Müller
+# Website:       https://4fasters.com.br
+# Author:        Mateus Gabriel Müller
+# Maintenance:   Mateus Gabriel Müller
 #
 # ------------------------------------------------------------------------ #
-#  Este programa recebe como parâmetro o tempo de atualização em segundos,
-#  bem como quantas vezes deve ser mostrado os valores.
+#  This script receives two parameters:
+#    * update time (seconds) - This is how much time the script will wait to make a new request to the API
+#    * number of requests - This is how many requests the script will make to the API
 #
-#  Exemplos:
-#      $ ./cotarBtc.sh 5 10
-#      No exempo acima será atualizado 10 vezes a cada 5 segundos
+# Examples:
+#      $ ./cotarBtc.sh 5 10 - 10 requests every 5 seconds
 # ------------------------------------------------------------------------ #
-# Histórico:
+# Changelog:
 #
 #   v1.0 18/08/2018, Mateus Müller:
-#       - Versão inicial apenas com busca na API
+#       - Initial version with query to the API
 #   v1.1 19/08/2018
-#       - Versão 1.1 com menu, -h, -v e parâmetros de repetição
+#       - Added -v, -h and the looping
 #   v1.2 07/09/2018
-#       - Alterado expressão regular e nome da função principal
+#       - Added sed expression the cut data from the API
 #   v2.0 07/09/2018
-#       - Refeito todo design do código
-#       - Removido o teste de parâmetro
-#       - Função de dump foi movida para o final do arquivo para não afetar na performance de outros comandos como -h e -v
-#       - Adicionado variáveis padrão para sempre ser executado com algum parâmetro (linhas 69 e 70)
-#       - Otimizada a função de mensagens de 8 linhas para 2
-#       - Alterado o nome das funções para seguir o padrão Português
-#       - Função principal foi alterado de for para while, melhorando a leitura do mesmo
-#       - Funçã de dump da Internet foi adicionada diretamente no comando read, ao invés de uma variável antes
+#       - Redesign of the code
+#       - The request to the API was moved to the end of the code to be more performatic
+#       - Added parameter expansion
+#       - Changed variable and function names to PT-BR
 # ------------------------------------------------------------------------ #
-# Testado em:
+# Tested on:
 #   bash 4.4.19
 # ------------------------------------------------------------------------ #
 
-# -------------------------------VARIÁVEIS BÁSICAS----------------------------------------- #
-# Cores para o printf
-VERDE='\033[1;32m'
-SEM_COR='\033[0m'
-AMARELO='\033[1;33m'
-VERMELHO='\033[1;31m'
+# -------------------------------BASIC VARIABLES----------------------------------------- #
+# Colors for printf
+GREEN='\033[1;32m'
+NO_COLOR='\033[0m'
+YELLOW='\033[1;33m'
 
-# Mensagem -h
+# Message -h
 MENSAGEM_USO="
-Uso: $(basename "$0") TEMPO_DE_ATUALIZAÇÃO NUMERO_DE_REPETIÇÕES [OPÇÕES]
+Use: $(basename "$0") UPDATE_TIME_SECONDS NUMBER_OF_REQUESTS
 
-OPÇÕES:
-    -v, --version - Mostra a versão do script
-    -h, --help - Mostra opções de ajuda
+OPTIONS:
+    -v, --version - Script version
+    -h, --help - Help page
 "
 VERSAO="v2.0"
 # ------------------------------------------------------------------------ #
 
-# -------------------------------TESTES----------------------------------------- #
-# Lynx instalado?
-[ ! -x "$(which lynx)" ] && printf "${AMARELO}Precisamos instalar o ${VERDE}Lynx${AMARELO}, por favor, digite sua senha:${SEM_COR}\n" && sudo apt install lynx 1> /dev/null 2>&1 -y
+# -------------------------------TESTS----------------------------------------- #
+# Lynx installed?
+[ ! -x "$(which lynx)" ] && printf "${YELLOW}We need to install ${GREEN}Lynx${YELLOW}, please, type your password:${NO_COLOR}\n" && sudo apt install lynx 1> /dev/null 2>&1 -y
 # ------------------------------------------------------------------------ #
 
-# -------------------------------VARIÁVEIS AVANÇADAS----------------------------------------- #
+# -------------------------------ADVANCED VARIABLES----------------------------------------- #
 API_MERCADO_BITCOIN="https://www.mercadobitcoin.net/api/BTC/ticker/"
-DESCRICAO_DAS_INFORMACOES=(
-  "Maior preço unitário de negociação das últimas 24 horas: "
-  "Menor preço unitário de negociação das últimas 24 horas: "
-  "Quantidade negociada nas últimas 24 horas: "
-  "Preço unitário da última negociação: "
-  "Maior preço de oferta de compra das últimas 24 horas: "
-  "Menor preço de oferta de venda das últimas 24 horas: "
-  "Data: "
+INFORMATIONS_DESCRIPTION=(
+  "Highest unit price of the last 24 hours: "
+  "Lowest unit price of the last 24 hours: "
+  "Quantity traded in the last 24 hours: "
+  "Unit price of the last negotiation: "
+  "Highest bid offer price in the last 24 hours: "
+  "Lowest offer price for the last 24 hours: "
+  "Date: "
 )
-TEMPO_DE_ATUALIZACAO=${1:-1}
-VEZES_EXECUTADAS=${2:-10}
+UPDATE_TIME=${1:-1}
+NUMBER_OF_REQUESTS=${2:-10}
 # ------------------------------------------------------------------------ #
 
-# -------------------------------FUNÇÕES----------------------------------------- #
-FormataData () {
-  date -d "@${1}" +%d/%m/%Y # Formata de Unix para dd/mm/yyyy
+# -------------------------------FUNCTIONS----------------------------------------- #
+formatDate () {
+  date -d "@${1}" +%d/%m/%Y # Format to dd/mm/yyyy
 }
 
-MostraDados () {
-  # O parâmetro 6 significa que é a DATA e precisa ser formatada para dd/mm/yyyy
-  [ $1 -eq 6 ] && echo -e "${VERDE}${DESCRICAO_DAS_INFORMACOES[$1]}${AMARELO}$(FormataData ${ARRAY_JSON_MERCADO_BITCOIN[$1]})\n--" && return
-  echo -e "${VERDE}${DESCRICAO_DAS_INFORMACOES[$1]}${AMARELO}${ARRAY_JSON_MERCADO_BITCOIN[$1]}"
+getData () {
+  # The number 6 below means the Date must be formated to dd/mm/yyyy
+  [ $1 -eq 6 ] && echo -e "${GREEN}${INFORMATIONS_DESCRIPTION[$1]}${YELLOW}$(formatDate ${ARRAY_JSON_MERCADO_BITCOIN[$1]})\n--" && return
+  echo -e "${GREEN}${INFORMATIONS_DESCRIPTION[$1]}${YELLOW}${ARRAY_JSON_MERCADO_BITCOIN[$1]}"
 }
 
-ListaDados () {
-local contador=0
-local contador_2=0
+listData () {
+local counter=0
+local counter_2=0
 
-while [[ $contador -lt $VEZES_EXECUTADAS ]]; do
-  while [[ $contador_2 -lt ${#ARRAY_JSON_MERCADO_BITCOIN[@]} ]]; do # Enquanto for menor que length
-    MostraDados $contador_2
-    contador_2=$(($contador_2+1))
+while [[ $counter -lt $NUMBER_OF_REQUESTS ]]; do
+  while [[ $counter_2 -lt ${#ARRAY_JSON_MERCADO_BITCOIN[@]} ]]; do # While less than length
+    getData $counter_2
+    counter_2=$(($counter_2+1))
   done
-  sleep $TEMPO_DE_ATUALIZACAO
-  contador=$(($contador+1))
-  contador_2=0
+  sleep $UPDATE_TIME
+  counter=$(($counter+1))
+  counter_2=0
 done
 }
 # ------------------------------------------------------------------------ #
 
-# -------------------------------EXECUÇÃO----------------------------------------- #
+# -------------------------------EXECUTION----------------------------------------- #
 if test -n "$1"; then
   case "$1" in
-    -v|--version) printf "Versão $VERSAO\n" && exit 0 ;;
+    -v|--version) printf "Version $VERSAO\n" && exit 0 ;;
     -h|--help)    printf "$MENSAGEM_USO\n"  && exit 0 ;;
   esac
 fi
 
-# Executa no final para não influenciar na performance
-read -r -a ARRAY_JSON_MERCADO_BITCOIN <<< "$(lynx -source $API_MERCADO_BITCOIN | sed 's/[^0-9 .]//g')" # Cria Array com os valores
+read -r -a ARRAY_JSON_MERCADO_BITCOIN <<< "$(lynx -source $API_MERCADO_BITCOIN | sed 's/[^0-9 .]//g')" # Create an array with the returned values
 
-ListaDados
+listData
 # ------------------------------------------------------------------------ #
