@@ -39,14 +39,14 @@ NO_COLOR='\033[0m'
 YELLOW='\033[1;33m'
 
 # Message -h
-MENSAGEM_USO="
+USE_MESSAGE="
 Use: $(basename "$0") UPDATE_TIME_SECONDS NUMBER_OF_REQUESTS
 
 OPTIONS:
     -v, --version - Script version
     -h, --help - Help page
 "
-VERSAO="v2.0"
+VERSION="v2.0"
 # ------------------------------------------------------------------------ #
 
 # -------------------------------TESTS----------------------------------------- #
@@ -99,8 +99,8 @@ done
 # -------------------------------EXECUTION----------------------------------------- #
 if test -n "$1"; then
   case "$1" in
-    -v|--version) printf "Version $VERSAO\n" && exit 0 ;;
-    -h|--help)    printf "$MENSAGEM_USO\n"  && exit 0 ;;
+    -v|--version) printf "Version $VERSION\n" && exit 0 ;;
+    -h|--help)    printf "$USE_MESSAGE\n"  && exit 0 ;;
   esac
 fi
 
